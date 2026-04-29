@@ -23,35 +23,20 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary: netanalyzer.exe
-            archive: netanalyzer-windows-x86_64.zip
+            archive: netanalyzer-windows-x86_64-portable.zip
+            installer: netanalyzer-windows-installer.msi
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary: netanalyzer
-            archive: netanalyzer-linux-x86_64.tar.gz
+            archive: netanalyzer-linux-x86_64-portable.tar.gz
+            installer: netanalyzer-linux-installer.deb
 
           - os: macos-latest
             target: x86_64-apple-darwin
             binary: netanalyzer
-            archive: netanalyzer-macos-x86_64.tar.gz
-
-          # ─── Future Architectures ─────────────────────
-          # Uncomment to add ARM64 support:
-          
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            binary: netanalyzer
-            archive: netanalyzer-linux-arm64.tar.gz
-          
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            binary: netanalyzer
-            archive: netanalyzer-macos-arm64.tar.gz
-          
-          - os: windows-latest
-            target: aarch64-pc-windows-msvc
-            binary: netanalyzer.exe
-            archive: netanalyzer-windows-arm64.zip
+            archive: netanalyzer-macos-x86_64-portable.tar.gz
+            installer: netanalyzer-macos-installer.dmg
 
     steps:
       - name: Checkout
@@ -74,31 +59,64 @@ jobs:
             libssl-dev \
             pkg-config
 
-      - name: Build
+      - name: Build Portable Executable
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Package (Windows)
+      # ─── Portable Packages ──────────────────────────────────────────────────
+      - name: Package Portable (Windows)
         if: runner.os == 'Windows'
         run: |
           cd target/${{ matrix.target }}/release
           7z a ../../../${{ matrix.archive }} ${{ matrix.binary }}
 
-      - name: Package (Unix)
+      - name: Package Portable (Unix)
         if: runner.os != 'Windows'
         run: |
           cd target/${{ matrix.target }}/release
           tar czf ../../../${{ matrix.archive }} ${{ matrix.binary }}
 
-      - name: Upload Artifact
+      # ─── Native Installers ──────────────────────────────────────────────────
+      - name: Build Windows Installer (.msi)
+        if: runner.os == 'Windows'
+        run: |
+          cargo install cargo-wix
+          cargo wix --nocapture
+          Copy-Item target/wix/*.msi ../${{ matrix.installer }}
+        working-directory: .
+
+      - name: Build Linux Installer (.deb)
+        if: runner.os == 'Linux'
+        run: |
+          cargo install cargo-deb
+          cargo deb
+          cp target/debian/*.deb ${{ matrix.installer }}
+
+      - name: Build macOS Installer (.dmg)
+        if: runner.os == 'macOS'
+        run: |
+          cargo install cargo-bundle
+          cargo bundle --release --format osx
+          hdiutil create -volname "NetAnalyzer" -srcfolder target/release/bundle/osx/netanalyzer.app -ov -format UDZO ${{ matrix.installer }}
+
+      # ─── Upload Artifacts ───────────────────────────────────────────────────
+      - name: Upload Portable Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.archive }}
           path: ${{ matrix.archive }}
 
-      - name: Upload Release
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.installer }}
+          path: ${{ matrix.installer }}
+
+      - name: Upload to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.archive }}
+          files: |
+            ${{ matrix.archive }}
+            ${{ matrix.installer }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
