@@ -85,6 +85,49 @@ pub fn show_dashboard(ui: &mut egui::Ui, state: &AppState, current_page: &mut Pa
 
         ui.add_space(16.0);
 
+        // Traffic Graph
+        theme::card_frame().show(ui, |ui| {
+            ui.label(RichText::new("📈  Real-time Traffic (bytes/s)").size(14.0).color(theme::TEXT_PRIMARY).strong());
+            ui.add_space(8.0);
+            
+            let mut rx_points = Vec::new();
+            let mut tx_points = Vec::new();
+            
+            let now_sec = state.start_time.elapsed().as_secs_f64();
+            
+            for (t, rx, tx) in &state.traffic_history {
+                let x = *t - now_sec; // Negative time for X axis
+                rx_points.push([x, *rx]);
+                tx_points.push([x, *tx]);
+            }
+            
+            let rx_line = egui_plot::Line::new(rx_points)
+                .color(theme::SUCCESS)
+                .name("Download (RX)")
+                .width(2.0);
+                
+            let tx_line = egui_plot::Line::new(tx_points)
+                .color(theme::PRIMARY)
+                .name("Upload (TX)")
+                .width(2.0);
+
+            egui_plot::Plot::new("traffic_plot")
+                .height(180.0)
+                .allow_drag(false)
+                .allow_zoom(false)
+                .include_y(0.0)
+                .include_y(1024.0) // At least 1KB scale
+                .include_x(-60.0)
+                .include_x(0.0)
+                .show_axes([false, true])
+                .show(ui, |plot_ui| {
+                    plot_ui.line(rx_line);
+                    plot_ui.line(tx_line);
+                });
+        });
+
+        ui.add_space(16.0);
+
         // Info box
         theme::card_frame().show(ui, |ui| {
             ui.label(RichText::new("ℹ️  Information").size(14.0).color(theme::TEXT_PRIMARY).strong());

@@ -272,8 +272,8 @@ fn export_results(results: &[IpScanResult]) {
 }
 
 fn rfd_save_dialog(default_name: &str) -> Option<std::path::PathBuf> {
-    // Simple file save - just use a default location
-    let mut path = std::env::current_dir().unwrap_or_default();
-    path.push(default_name);
-    Some(path)
+    rfd::FileDialog::new()
+        .set_file_name(default_name)
+        .add_filter("JSON", &["json"])
+        .save_file()
 }

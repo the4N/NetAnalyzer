@@ -32,6 +32,8 @@ pub struct AppState {
     pub last_port_count: usize,
     pub last_speed_result: String,
     pub last_wifi_count: usize,
+    pub traffic_history: std::collections::VecDeque<(f64, f64, f64)>, // (time, rx, tx)
+    pub start_time: std::time::Instant,
 }
 
 impl Default for AppState {
@@ -54,6 +56,8 @@ impl Default for AppState {
             last_port_count: 0,
             last_speed_result: "Not tested".to_string(),
             last_wifi_count: 0,
+            traffic_history: std::collections::VecDeque::new(),
+            start_time: std::time::Instant::now(),
         }
     }
 }
@@ -81,6 +85,10 @@ pub struct NetAnalyzerApp {
 
     // Theme applied flag
     theme_applied: bool,
+
+    // Network stats
+    networks: sysinfo::Networks,
+    last_update: std::time::Instant,
 }
 
 impl NetAnalyzerApp {
@@ -104,6 +112,8 @@ impl NetAnalyzerApp {
             port_scan_rx: None,
             speed_test_rx: None,
             theme_applied: false,
+            networks: sysinfo::Networks::new_with_refreshed_list(),
+            last_update: std::time::Instant::now(),
         }
     }
 }
@@ -115,6 +125,29 @@ impl eframe::App for NetAnalyzerApp {
             theme::apply_theme(ctx);
             self.theme_applied = true;
         }
+
+        // Update network traffic stats
+        let now = std::time::Instant::now();
+        if now.duration_since(self.last_update).as_secs_f32() >= 1.0 {
+            self.networks.refresh(true);
+            
+            let mut total_rx = 0;
+            let mut total_tx = 0;
+            for (_, data) in &self.networks {
+                total_rx += data.received();
+                total_tx += data.transmitted();
+            }
+            
+            let time_sec = self.app_state.start_time.elapsed().as_secs_f64();
+            self.app_state.traffic_history.push_back((time_sec, total_rx as f64, total_tx as f64));
+            if self.app_state.traffic_history.len() > 60 { // keep 60 seconds
+                self.app_state.traffic_history.pop_front();
+            }
+            self.last_update = now;
+        }
+
+        // Keep updating continuously to draw the graph
+        ctx.request_repaint();
 
         // Sidebar panel
         egui::SidePanel::left("sidebar")

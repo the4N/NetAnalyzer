@@ -11,14 +11,21 @@ A cross-platform native desktop application for network analysis, built in **Rus
 | **Speed Test** | Download/upload speed and latency measurement |
 | **WiFi Scanner** | Discover nearby WiFi networks with signal, security, and band info |
 | **Channel Analyzer** | Analyze WiFi channel congestion and get optimal channel recommendations |
+| **Export Data** | Export scan results to JSON for reporting and external analysis |
 
 ## Screenshots
 
-(Coming soon)
+> 📸 *Screenshots coming soon!*
 
 ## Quick Start
 
-### Prerequisites
+### Pre-built Installers (Recommended)
+You can download native installers from the **[GitHub Releases](../../releases)** page:
+- **Windows**: `.msi` (x86_64, ARM64)
+- **macOS**: `.dmg` (Intel, Apple Silicon M1/M2/M3)
+- **Linux**: `.deb` (x86_64, ARM64)
+
+### Prerequisites (For Building from Source)
 - **Rust** (stable toolchain): Install via [rustup.rs](https://rustup.rs)
 - **Windows**: No additional dependencies (WebView2 not needed — this is native GPU rendering)
 - **Linux**: Install GPU/windowing development libraries:
@@ -75,23 +82,17 @@ src/
     └── network.rs       # CIDR parsing, port parsing, formatting
 ```
 
-## Cross-Platform Build
+## CI/CD Pipeline
 
-Build for your current platform:
-```bash
-cargo build --release
-```
+The project uses a powerful GitHub Actions workflow (`.github/workflows/release.yml`) that automatically builds native installers and portable binaries on every push to `main` or new `v*` tag:
 
-For automated multi-platform builds, use GitHub Actions (see `.github/workflows/release.yml`).
+- **Windows**: `.exe` and `.msi` (Using WiX Toolset)
+- **Linux**: Portable `.tar.gz` and `.deb` (Using cargo-deb)
+- **macOS**: Portable `.tar.gz` and `.dmg` (Using cargo-bundle and hdiutil)
 
-### Adding New Architectures
-
-Simply add the target to the CI matrix:
-```yaml
-# In .github/workflows/release.yml
-- { os: ubuntu-latest, target: aarch64-unknown-linux-gnu }
-- { os: macos-latest, target: aarch64-apple-darwin }
-```
+**Supported Architectures:**
+- `x86_64` (Intel/AMD) for all platforms
+- `aarch64` (ARM64 / Apple Silicon / Snapdragon / RasPi) for all platforms
 
 ## Permissions
 
@@ -107,6 +108,7 @@ Some features require elevated privileges:
 - **Async**: tokio (multi-threaded runtime)
 - **Networking**: surge-ping, tokio::net, reqwest
 - **Charts**: egui_plot
+- **Serialization**: serde_json
 
 ## License
 

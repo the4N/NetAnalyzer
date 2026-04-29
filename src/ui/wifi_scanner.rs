@@ -100,6 +100,16 @@ pub fn show_wifi_scanner(
                 }
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if !state.networks.is_empty() {
+                        if ui.add(
+                            egui::Button::new(RichText::new("💾  Export").size(12.0).color(theme::TEXT_SECONDARY))
+                                .fill(theme::BG_ELEVATED)
+                                .corner_radius(egui::CornerRadius::same(6)),
+                        ).clicked() {
+                            export_results(&state.networks);
+                        }
+                    }
+                    
                     ui.label(
                         RichText::new(format!("{} networks found", state.networks.len()))
                             .size(12.0)
@@ -224,4 +234,24 @@ fn perform_wifi_scan(state: &mut WifiScannerState, app_state: &mut AppState) {
     }
 
     state.is_scanning = false;
+}
+
+fn export_results(results: &[WifiNetwork]) {
+    if let Some(path) = rfd_save_dialog("wifi_scan_results.json") {
+        match serde_json::to_string_pretty(results) {
+            Ok(json) => {
+                let _ = std::fs::write(&path, json);
+            }
+            Err(e) => {
+                tracing::error!("Failed to serialize results: {}", e);
+            }
+        }
+    }
+}
+
+fn rfd_save_dialog(default_name: &str) -> Option<std::path::PathBuf> {
+    rfd::FileDialog::new()
+        .set_file_name(default_name)
+        .add_filter("JSON", &["json"])
+        .save_file()
 }

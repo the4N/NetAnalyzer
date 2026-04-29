@@ -174,6 +174,14 @@ pub fn show_port_scanner(
                         state.progress = 0.0;
                         state.error = None;
                     }
+
+                    if ui.add(
+                        egui::Button::new(RichText::new("💾  Export JSON").size(12.0).color(theme::TEXT_SECONDARY))
+                            .fill(theme::BG_ELEVATED)
+                            .corner_radius(egui::CornerRadius::same(6)),
+                    ).clicked() {
+                        export_results(&state.results);
+                    }
                 }
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -319,4 +327,24 @@ fn start_port_scan(
     runtime.spawn(async move {
         crate::scanner::port::scan_ports(target, ports, timeout, workers, grab_banners, tx_chan).await;
     });
+}
+
+fn export_results(results: &[PortScanResult]) {
+    if let Some(path) = rfd_save_dialog("port_scan_results.json") {
+        match serde_json::to_string_pretty(results) {
+            Ok(json) => {
+                let _ = std::fs::write(&path, json);
+            }
+            Err(e) => {
+                tracing::error!("Failed to serialize results: {}", e);
+            }
+        }
+    }
+}
+
+fn rfd_save_dialog(default_name: &str) -> Option<std::path::PathBuf> {
+    rfd::FileDialog::new()
+        .set_file_name(default_name)
+        .add_filter("JSON", &["json"])
+        .save_file()
 }
