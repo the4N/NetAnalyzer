@@ -24,19 +24,37 @@ jobs:
             target: x86_64-pc-windows-msvc
             binary: netanalyzer.exe
             archive: netanalyzer-windows-x86_64-portable.zip
-            installer: netanalyzer-windows-installer.msi
+            installer: netanalyzer-windows-x86_64-installer.msi
+
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            binary: netanalyzer.exe
+            archive: netanalyzer-windows-arm64-portable.zip
+            installer: netanalyzer-windows-arm64-installer.msi
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary: netanalyzer
             archive: netanalyzer-linux-x86_64-portable.tar.gz
-            installer: netanalyzer-linux-installer.deb
+            installer: netanalyzer-linux-x86_64-installer.deb
 
-          - os: macos-latest
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            binary: netanalyzer
+            archive: netanalyzer-linux-arm64-portable.tar.gz
+            installer: netanalyzer-linux-arm64-installer.deb
+
+          - os: macos-13
             target: x86_64-apple-darwin
             binary: netanalyzer
             archive: netanalyzer-macos-x86_64-portable.tar.gz
-            installer: netanalyzer-macos-installer.dmg
+            installer: netanalyzer-macos-x86_64-installer.dmg
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary: netanalyzer
+            archive: netanalyzer-macos-arm64-portable.tar.gz
+            installer: netanalyzer-macos-arm64-installer.dmg
 
     steps:
       - name: Checkout
