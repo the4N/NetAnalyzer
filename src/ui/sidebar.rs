@@ -75,7 +75,7 @@ pub fn show_sidebar(ui: &mut egui::Ui, current_page: &mut Page) {
             ui.with_layout(Layout::bottom_up(Align::LEFT), |ui| {
                 ui.add_space(8.0);
                 ui.label(
-                    RichText::new("v0.1.0")
+                    RichText::new("v1.0")
                         .size(10.0)
                         .color(theme::TEXT_MUTED),
                 );
