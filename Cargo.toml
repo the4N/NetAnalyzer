@@ -1,0 +1,43 @@
+[package]
+name = "netanalyzer"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-platform network analysis tool with native desktop GUI"
+authors = ["NetAnalyzer"]
+
+[dependencies]
+# GUI Framework
+eframe = { version = "0.31", default-features = true }
+egui_extras = { version = "0.31", features = ["default"] }
+egui_plot = "0.31"
+
+# Async Runtime
+tokio = { version = "1", features = ["full"] }
+
+# Networking
+surge-ping = "0.8"
+dns-lookup = "2"
+reqwest = { version = "0.12", features = ["stream", "rustls-tls"], default-features = false }
+socket2 = "0.5"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+csv = "1"
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+rand = "0.8"
+local-ip-address = "0.6"
+hostname = "0.4"
+futures-util = "0.3"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+codegen-units = 1
